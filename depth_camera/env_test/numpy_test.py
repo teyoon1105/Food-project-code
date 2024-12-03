@@ -9,4 +9,4 @@ binary_mask = np.array([
 
 mask_indices = np.where(binary_mask > 0)
 
-print((mask_indices[0]*0.5).astype(int))
+print((mask_indices))
