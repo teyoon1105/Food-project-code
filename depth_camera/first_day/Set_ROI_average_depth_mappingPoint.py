@@ -2,9 +2,11 @@ import pyrealsense2 as rs
 import numpy as np
 import cv2
 from ultralytics import YOLO
+import os
 
 # YOLO Segmentation 모델 로드
-model_path = "C:/Users/SBA/teyoon_github/Food-project-code/depth_camera/best.pt"
+Now_path = os.getcwd()
+model_path = os.path.join(Now_path, 'best.pt')
 model = YOLO(model_path)  # 학습된 YOLO Segmentation 모델 사용
 
 # 파이프라인 설정 (깊이 및 컬러 스트림 활성화)
@@ -94,33 +96,34 @@ try:
         cv2.setMouseCallback('Color Image', mouse_callback)
         
         cv2.imshow('Color Image', img)
-        # # YOLO Segmentation 모델 실행
-        # results = model(img)
+
+        # YOLO Segmentation 모델 실행
+        results = model(img)
         
-        # for result in results:
-        #     if result.masks is not None:
-        #         masks = result.masks.data.cpu().numpy()
-        #         classes = result.boxes.cls.cpu().numpy()
-        #         class_names = model.names
+        for result in results:
+            if result.masks is not None:
+                masks = result.masks.data.cpu().numpy()
+                classes = result.boxes.cls.cpu().numpy()
+                class_names = model.names
 
-        #         for i, mask in enumerate(masks):
-        #             binary_mask = (mask > 0.5).astype(np.uint8)
-        #             mask_indices = np.where(binary_mask > 0)
+                for i, mask in enumerate(masks):
+                    binary_mask = (mask > 0.5).astype(np.uint8)
+                    mask_indices = np.where(binary_mask > 0)
 
-        #             try:
-        #                 object_depths = depth_image[mask_indices]
-        #                 object_depths = object_depths[object_depths > 0]  # 유효하지 않은 깊이 값 (0) 필터링
-        #                 average_depth_mm = np.mean(object_depths)
-        #                 average_depth_cm = average_depth_mm / 10  # 밀리미터에서 센티미터로 변환
-        #             except IndexError:
-        #                 print("에러: 객체에 대한 깊이 데이터를 추출할 수 없습니다.")
-        #                 average_depth_cm = 0  # 또는 적절하게 에러 처리
+                    try:
+                        object_depths = depth_image[mask_indices]
+                        object_depths = object_depths[object_depths > 0]  # 유효하지 않은 깊이 값 (0) 필터링
+                        average_depth_mm = np.mean(object_depths)
+                        average_depth_cm = average_depth_mm / 10  # 밀리미터에서 센티미터로 변환
+                    except IndexError:
+                        print("에러: 객체에 대한 깊이 데이터를 추출할 수 없습니다.")
+                        average_depth_cm = 0  # 또는 적절하게 에러 처리
 
-        #             # 바운딩 박스와 클래스 레이블 그리기
-        #             box = result.boxes.xyxy[i].cpu().numpy()
-        #             x1, y1, x2, y2 = map(int, box)
-        #             cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
-        #             cv2.putText(img, f"{class_names[int(classes[i])]}: {average_depth_cm:.2f} cm", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
+                    # 바운딩 박스와 클래스 레이블 그리기
+                    box = result.boxes.xyxy[i].cpu().numpy()
+                    x1, y1, x2, y2 = map(int, box)
+                    cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                    cv2.putText(img, f"{class_names[int(classes[i])]}: {average_depth_cm:.2f} cm", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
 
         # 만약 두 점이라면, 즉 직사각형을 그릴 수 있는 상황이라면
         if len(roi_pts) == 2:  # 두 점이 선택되었으면 ROI 계산 및 표시
