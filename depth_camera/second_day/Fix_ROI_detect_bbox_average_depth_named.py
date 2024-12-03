@@ -89,6 +89,7 @@ try:
                         object_name = cls_name.get(key, "Unknown")
 
                         # 바운딩 박스 좌표 가져오기
+                        boxes = result.boxes.cpu().numpy()
                         box = result.boxes.xyxy[i].cpu().numpy()
                         cx1, cy1, cx2, cy2 = map(int, box)
                         cv2.rectangle(cropped_image, (cx1, cy1), (cx2, cy2), (255, 0, 0), 2)
