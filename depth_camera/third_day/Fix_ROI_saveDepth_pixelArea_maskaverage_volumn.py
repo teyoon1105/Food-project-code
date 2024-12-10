@@ -152,6 +152,8 @@ try:
                             # 픽셀 면적 계산 (cm²)
                             pixel_area_cm2 =(z_cm * z_cm) / (depth_intrin.fx * depth_intrin.fy)
 
+                            print(depth_intrin.fx, depth_intrin.fy)
+
                             # 부피 계산 (cm³)
                             pixel_volume_cm3 = pixel_area_cm2 * height_cm
                             total_volume_cm3 += pixel_volume_cm3  # 총 부피에 더하기
