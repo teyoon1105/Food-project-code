@@ -1,6 +1,6 @@
 import cv2
 
-img_path = "D:/food_detection/train_16/brown seaweed_soup/04011005/04_041_04011005_160273319870986.jpeg"
+img_path = "D:/food_detection/train_16/brown seaweed_soup/04011005_train/04_041_04011005_160273319870986.jpeg"
 
 img = cv2.imread(img_path)
 
