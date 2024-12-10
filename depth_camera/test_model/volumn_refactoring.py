@@ -4,6 +4,7 @@ import cv2  # OpenCV 라이브러리
 import os  # 파일 및 경로 작업
 from ultralytics import YOLO  # YOLO 객체 탐지 라이브러리
 import logging  # 로그 메시지 관리
+import torch
 
 # 로그 레벨 설정 (INFO 메시지 비활성화)
 logging.getLogger("ultralytics").setLevel(logging.WARNING)
@@ -13,16 +14,23 @@ logging.getLogger("ultralytics").setLevel(logging.WARNING)
 Now_path = os.getcwd()
 model_folder = os.path.join(Now_path, 'model')
 
-model_list = ['1st_500_best.pt',
-              '1st_contrast_best.pt',
-              '1st_mix_scaled_best.pt', 
-              '1st_scaled_best.pt', 
-              '1st_sharpning_best.pt'
-            ]
-
-model_name = model_list[3]
+model_list = ['1st_1000mix_a1002_best.pt',
+              '1st_500_best.pt',
+              '1st_8000mix_a1002_best.pt',
+              '1st_seg_original_30blur_a1002_best.pt',
+              '1st_seg_original_30sharp_a1002_best.pt',
+              '1st_seg_original_a1002_best.pt',
+              '1st_seg_scaled_a1002_best.pt'
+              ]
+model_name = model_list[0]
 MODEL_PATH = os.path.join(model_folder, model_name)
 model = YOLO(MODEL_PATH)
+
+if torch.cuda.is_available():
+    model.to('cuda')
+else:
+    print("GPU is not available. Using CPU.")
+
 
 # Intel RealSense 카메라 설정
 pipeline = rs.pipeline() # 파이프라인 생성
@@ -34,14 +42,6 @@ config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30) # 컬러 �
 ROI_POINTS = [(175, 50), (1055, 690)] 
 BRIGHTNESS_INCREASE = 50 # ROI 영역 컬러 프레임의 밝기를 높일 값
 
-# 비디오 저장 설정
-# 필요시에 사용
-fourcc = cv2.VideoWriter_fourcc(*'XVID')  # 코덱 설정 (적절한 코덱 사용)
-fps = 30.0  # 프레임 레이트
-width = ROI_POINTS[1][0] - ROI_POINTS[0][0]  # ROI 너비
-height = ROI_POINTS[1][1] - ROI_POINTS[0][1] # ROI 높이
-video_name = 'test' + model_name + '.avi'
-out = cv2.VideoWriter(video_name, fourcc, fps, (width, height)) # 파일명, 코덱, 프레임 레이트, 크기
 
 
 # 클래스 ID와 이름, 색상을 매핑
@@ -112,17 +112,20 @@ def calculate_volume(cropped_depth, save_depth, mask_indices, depth_intrin, min_
 
     for pixel_y, pixel_x in zip(y_indices, x_indices): # 좌표를 하나씩 zip을 통해 받아옴
         z_cm = cropped_depth[pixel_y, pixel_x] / 10  # 가져온 좌표의 깊이 cm로 변환
+        # mean_z_cm = np.mean(z_cm) # 평균 객체 높이
         base_depth_cm = save_depth[pixel_y, pixel_x] / 10  # 전역변수로 저장된 깊이 값에서 현재 좌표 깊이 cm로 변환
+        # mean_base_cm = np.mean(base_depth_cm) # 평균 객체 아래 높이
 
         if z_cm > min_depth_cm and base_depth_cm > 25: # 실제 높이값은 약 40cm정도 > 각각 20, 25 cm보다 작은 값이면 아예 받질 않는다(잘못된 값 필터링)
             height_cm = base_depth_cm - z_cm # 저장 깊이 - 현재 깊이 > 각 픽셀의 높이
+            # mean_height_cm = mean_base_cm - mean_z_cm
             pixel_area_cm2 = (z_cm ** 2) / (depth_intrin.fx * depth_intrin.fy) # 공식을 통해 픽셀 넓이 추정
             total_volume += pixel_area_cm2 * height_cm # 한 픽셀을 직육면체라고 가정하고 부피 값을 구하고, 해당 값을 총 부피에 저장
 
-    return total_volume # 총 부피 반환
+    return total_volume #, mean_height_cm # 총 부피 반환
 
 
-def visualize_results(cropped_image, all_colored_mask, object_name, total_volume, conf, color, mask_indices):
+def visualize_results(cropped_image, all_colored_mask, object_name, total_volume, mean_height, conf, color, mask_indices):
     """탐지 결과를 시각화"""
     y_indices, x_indices = mask_indices # 모델이 예측한 마스크 좌표를 가져옴
     min_x = np.min(x_indices) # 우 상단에 필요한 최소 x 좌표
@@ -130,7 +133,7 @@ def visualize_results(cropped_image, all_colored_mask, object_name, total_volume
     label_position = (min_x, min_y - 10) # 마스크에 겹치지 않게 약간 윗쪽으로
 
     # 마스크 색상 적용 및 텍스트 표시
-    cv2.putText(all_colored_mask, f"{object_name}:V:{total_volume:.2f}cm_3,C:{conf:.2f}", # 인자로 받은 컬러 마스크 위에 객체 이름과 부피값을 텍스트로 작성
+    cv2.putText(all_colored_mask, f"{object_name}:V:{total_volume:.2f}cm_3,C:{conf:.2f},H:{mean_height:.2f}", # 인자로 받은 컬러 마스크 위에 객체 이름과 부피값을 텍스트로 작성
                 label_position, cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
     return cv2.addWeighted(cropped_image, 0.7, all_colored_mask, 0.3, 0) # 텍스트가 작성된 컬러 마스크와 roi 영역 합치기
 
@@ -186,6 +189,7 @@ def main():
                             continue
 
                         valid_depths = cropped_depth[mask_indices] # 마스크 좌표에 해당하는 좌표들을 깊이 이미지에서 슬라이싱
+
                         if len(valid_depths[valid_depths > 0]) == 0:
                             continue
 
@@ -193,15 +197,15 @@ def main():
                         depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
 
                         # 부피 구하기
-                        total_volume = calculate_volume(cropped_depth, save_depth, mask_indices, depth_intrin)
+                        total_volume, mean_height = calculate_volume(cropped_depth, save_depth, mask_indices, depth_intrin)
 
                         # 개별 마스크에 색상 적용
                         all_colored_mask[color_mask == 1] = color
                         
                         # 색상 마스크와 컬러 이미지 합치기
-                        blended_image = visualize_results(brightened_image, all_colored_mask, object_name, total_volume, conf, color, mask_indices)
+                        blended_image = visualize_results(brightened_image, all_colored_mask, object_name, total_volume, mean_height, conf, color, mask_indices)
 
-                        out.write(blended_image)
+                        
 
             # 결과 이미지 표시
             cv2.imshow('Segmented Mask with Heights', blended_image)
@@ -211,7 +215,6 @@ def main():
     finally:
         pipeline.stop() # 파이프 라인 종료
         cv2.destroyAllWindows() # 창 닫기
-        out.release() # 비디오 writer 해제
 
 if __name__ == "__main__": # 코드를 실행하면
     main() # 메인함수 실행
