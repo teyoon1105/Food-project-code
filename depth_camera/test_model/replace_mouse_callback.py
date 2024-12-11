@@ -14,15 +14,21 @@ logging.getLogger("ultralytics").setLevel(logging.WARNING)
 # YOLO 모델 경로 및 초기화
 MODEL_DIR = os.path.join(os.getcwd(), 'model')
 
-model_list = ['1st_1000mix_a1002_best.pt', 
+model_list = ['100scaled_only_best.pt', 
+              '1st_1000mix_a1002_best.pt', 
+              '1st_100scaled_50org_mix_best.pt', 
               '1st_500_best.pt', 
+              '1st_50scaled_100org_mix_best.pt', 
               '1st_8000mix_a1002_best.pt', 
               '1st_mix_scale_best.pt', 
               '1st_seg_original_30blur_a1002_best.pt', 
               '1st_seg_original_30sharp_a1002_best.pt', 
               '1st_seg_original_a1002_best.pt', 
-              '1st_seg_scaled_a1002_best.pt'
-]
+              '1st_seg_scaled_a1002_best.pt', 
+              '3rd_10gb_data_best.pt', 
+              'blur_best.pt', 
+              'sharp_best.pt'
+              ]
 
 model_name = model_list[3]
 MODEL_PATH = os.path.join(MODEL_DIR, model_name)
@@ -50,19 +56,23 @@ BRIGHTNESS_INCREASE = 50 # ROI 영역 컬러 프레임의 밝기를 높일 값
 CLS_NAME_COLOR = {
     '01011001': ('Rice', (255, 0, 255)), # 자주색
     '01012006': ('Black Rice', (255, 0, 255)),
+    '01012002': ('Soy bean Rice', (255, 0, 255)),
     '04011005': ('Seaweed Soup', (0, 255, 255)),
-    '04011008': ('Beef stew', (0, 255, 255)),
+    '04011007': ('Beef stew', (0, 255, 255)),
     '04017001': ('Soybean Soup', (0, 255, 255)), # 노란색
     '06012004': ('Tteokgalbi', (0, 255, 0)), # 초록색
     '06012008': ('Beef Bulgogi', (0, 255, 0)),
     '07014001': ('EggRoll', (0, 0, 255)), # 빨간색
     '08011003': ('Stir-fried anchovies', (0, 0, 255)),
     '10012001': ('Chicken Gangjeong', (0, 0, 255)),
+    '07013003': ('Kimchijeon', (0, 0, 255)),
+    '11013010': ('KongNamul', (255, 255, 0)),
     '11014002': ('Gosari', (255, 255, 0)),
     '11013007': ('Spinach', (255, 255, 0)), # 청록색
     '12011008': ('Kimchi', (100, 100, 100)),
     '12011003': ('Radish Kimchi', (100, 100, 100))
 }
+
 
 # ---- 전역 변수 ----
 save_depth = None  # 기준 깊이 데이터 저장 변수
@@ -107,11 +117,6 @@ def display_message(image, message, position=(390, 370), color=(0, 0, 255)):
     cv2.putText(image, message, position, cv2.FONT_HERSHEY_TRIPLEX, 1, color, 2)
     cv2.imshow('Color Image with ROI', image)
     cv2.waitKey(1)
-
-
-def send_to_scale(objects):
-    print(f"new object{objects}")
-
 
 def calculate_volume(cropped_depth, save_depth, mask_indices, depth_intrin, min_depth_cm=20):
     """깊이 데이터를 이용하여 부피 계산"""
