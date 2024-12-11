@@ -15,24 +15,33 @@ logging.getLogger("ultralytics").setLevel(logging.WARNING)
 Now_path = os.getcwd()
 model_folder = os.path.join(Now_path, 'model')
 
-model_list = ['1st_1000mix_a1002_best.pt', 
+model_list = ['100scaled_only_best.pt', 
+              '1st_1000mix_a1002_best.pt', 
+              '1st_100scaled_50org_mix_best.pt', 
               '1st_500_best.pt', 
+              '1st_50scaled_100org_mix_best.pt', 
               '1st_8000mix_a1002_best.pt', 
               '1st_mix_scale_best.pt', 
               '1st_seg_original_30blur_a1002_best.pt', 
               '1st_seg_original_30sharp_a1002_best.pt', 
               '1st_seg_original_a1002_best.pt', 
-              '1st_seg_scaled_a1002_best.pt']
+              '1st_seg_scaled_a1002_best.pt', 
+              '3rd_10gb_data_best.pt', 
+              'blur_best.pt', 
+              'sharp_best.pt'
+              ]
 
-model_name = model_list[3]
+model_name = model_list[-3]
 print(f'model, {model_name} is connected')
 MODEL_PATH = os.path.join(model_folder, model_name)
 model = YOLO(MODEL_PATH)
 
 if torch.cuda.is_available():
     model.to('cuda')
+    print("Using GPU for processing.")
 else:
     print("GPU is not available. Using CPU.")
+
 
 # Intel RealSense 카메라 설정
 pipeline = rs.pipeline() # 파이프라인 생성
@@ -49,14 +58,17 @@ BRIGHTNESS_INCREASE = 50 # ROI 영역 컬러 프레임의 밝기를 높일 값
 CLS_NAME_COLOR = {
     '01011001': ('Rice', (255, 0, 255)), # 자주색
     '01012006': ('Black Rice', (255, 0, 255)),
+    '01012002': ('Soy bean Rice', (255, 0, 255)),
     '04011005': ('Seaweed Soup', (0, 255, 255)),
-    '04011008': ('Beef stew', (0, 255, 255)),
+    '04011007': ('Beef stew', (0, 255, 255)),
     '04017001': ('Soybean Soup', (0, 255, 255)), # 노란색
     '06012004': ('Tteokgalbi', (0, 255, 0)), # 초록색
     '06012008': ('Beef Bulgogi', (0, 255, 0)),
     '07014001': ('EggRoll', (0, 0, 255)), # 빨간색
     '08011003': ('Stir-fried anchovies', (0, 0, 255)),
     '10012001': ('Chicken Gangjeong', (0, 0, 255)),
+    '07013003': ('Kimchijeon', (0, 0, 255)),
+    '11013010': ('KongNamul', (255, 255, 0)),
     '11014002': ('Gosari', (255, 255, 0)),
     '11013007': ('Spinach', (255, 255, 0)), # 청록색
     '12011008': ('Kimchi', (100, 100, 100)),
@@ -94,12 +106,15 @@ def crop_roi(image, roi_points):
     x2, y2 = roi_points[1] # ROI 우하단 좌표
     return image[y1:y2, x1:x2] # 컬러 넘파이 배열을 ROI 영역만큼 자른 값 반환
 
-def mouse_callback(event, x, y, flags, param):
-    """마우스 콜백 함수로 깊이 데이터 저장"""
-    global save_depth # 전역 변수 save_depth를 사용(안하면 지역변수 됨)
-    if event == cv2.EVENT_LBUTTONDOWN: # 마우스 클릭 시
-        save_depth = param.copy() # param 여기선 ROI 영역의 깊이 배열 정보를 저장
-        print("Depth image saved!") # 저장 완료 terminal에 출력
+def is_depth_saved():
+    """깊이 데이터가 저장되었는지 확인"""
+    return save_depth is not None
+
+def display_message(image, message, position=(390, 370), color=(0, 0, 255)):
+    """이미지에 텍스트 메시지 표시"""
+    cv2.putText(image, message, position, cv2.FONT_HERSHEY_TRIPLEX, 1, color, 2)
+    cv2.imshow('Color Image with ROI', image)
+    cv2.waitKey(1)
 
 def calculate_volume(cropped_depth, save_depth, mask_indices, depth_intrin, min_depth_cm=20):
     """깊이 데이터를 이용하여 부피 계산"""
@@ -176,7 +191,6 @@ def main():
             # ROI 표시
             cv2.rectangle(color_image, ROI_POINTS[0], ROI_POINTS[1], (0, 0, 255), 2)
             cv2.imshow('Color Image with ROI', color_image)
-            cv2.setMouseCallback("Color Image with ROI", mouse_callback, cropped_depth) # param으로 ROI 영역의 깊이 넘파이 배열을 전달
 
             # ROI 컬러 넘파이 이미지에 밝기 증가
             brightened_image = cv2.convertScaleAbs(cropped_color, alpha=1, beta=BRIGHTNESS_INCREASE) 
@@ -194,23 +208,22 @@ def main():
                     for i, mask in enumerate(masks): # 마스크와 i값을 enumerate로 가져오기
                         # 탐지 객체의 conf 출력
                         conf = result.boxes.conf[i]
-                        resized_mask = cv2.resize(mask, (brightened_image.shape[1], brightened_image.shape[0])) # 모델이 뱉은 크기랑 이미지랑 맞추기
-                        color_mask = (resized_mask > 0.5).astype(np.uint8) # 마스크 배열의 확률이 0.5 보다 큰 놈들만 컬러마스크 배열로 저장
+                        class_key = model.names[int(classes[i])]
+                        object_name, color = CLS_NAME_COLOR.get(class_key, ("Unknown", (255, 255, 255)))
 
-                        class_key = model.names[int(classes[i])] # 모델의 객체 이름에서 클래스 id에 해당하는 애들 가져와서
-                        object_name, color = CLS_NAME_COLOR.get(class_key, ("Unknown", (255, 255, 255))) # 해당 객체 이름을 키값으로 하는 밸류값과, 색상값 가져오기
-
+                        # 기존 마스크 시각화 및 부피 계산 코드 유지
+                        resized_mask = cv2.resize(mask, (brightened_image.shape[1], brightened_image.shape[0]))
+                        color_mask = (resized_mask > 0.5).astype(np.uint8)
                         mask_indices = np.where(color_mask > 0) # 컬러마스크에서 0보다 큰 값들을 넘파이 좌표값으로 설정
 
-                        if save_depth is None: # 저장되지 않으면 실행 안되게
-                            cv2.putText(color_image, "Save your depth first!", (390,370), cv2.FONT_HERSHEY_TRIPLEX, 1, (0,0,255), 2)
-                            cv2.imshow('Color Image with ROI', color_image)
+                        if not is_depth_saved(): # 저장되지 않으면 실행 안되게
+                            display_message(color_image, "Save your depth first!")
                             continue
-
+                            
                         valid_depths = cropped_depth[mask_indices] # 마스크 좌표에 해당하는 좌표들을 깊이 이미지에서 슬라이싱
+
                         if len(valid_depths[valid_depths > 0]) == 0:
                             continue
-
                         # 카메라 내부 파라미터
                         depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
 
@@ -230,8 +243,12 @@ def main():
             # 결과 이미지 표시
             cv2.imshow('Segmented Mask with Heights', blended_image)
 
-            if cv2.waitKey(1) == 27:  # ESC 키로 종료
+            key = cv2.waitKey(1) & 0xFF
+            if key == 27:  # ESC 키
                 break
+            elif key == ord('s'):  # 's' 키로 깊이 저장
+                save_depth = cropped_depth.copy()
+                print("Depth image saved!")
     finally:
         save_video_with_timestamps(processed_frames, frame_timestamps, output_video_path)
         pipeline.stop() # 파이프 라인 종료
