@@ -212,19 +212,26 @@ if __name__ == "__main__":
     CLS_NAME_COLOR = {
     '01011001': ('Rice', (255, 0, 255)), # 자주색
     '01012006': ('Black Rice', (255, 0, 255)),
+    '01012002': ('Soy bean Rice', (255, 0, 255)),
+    '03011011': ('Pumpkin soup', (255, 0, 255)),
     '04011005': ('Seaweed Soup', (0, 255, 255)),
-    '04011008': ('Beef stew', (0, 255, 255)),
+    '04011007': ('Beef stew', (0, 255, 255)),
     '04017001': ('Soybean Soup', (0, 255, 255)), # 노란색
+    '04011011': ('Fish cake soup', (0, 255, 255)),
     '06012004': ('Tteokgalbi', (0, 255, 0)), # 초록색
     '06012008': ('Beef Bulgogi', (0, 255, 0)),
     '07014001': ('EggRoll', (0, 0, 255)), # 빨간색
     '08011003': ('Stir-fried anchovies', (0, 0, 255)),
     '10012001': ('Chicken Gangjeong', (0, 0, 255)),
+    '07013003': ('Kimchijeon', (0, 0, 255)),
+    '08012001': ('Stir-fried Potatoes', (255,255,0)),
+    '11013010': ('KongNamul', (255, 255, 0)),
     '11014002': ('Gosari', (255, 255, 0)),
     '11013007': ('Spinach', (255, 255, 0)), # 청록색
     '12011008': ('Kimchi', (100, 100, 100)),
     '12011003': ('Radish Kimchi', (100, 100, 100))
-    }
+}
+
     app = QApplication(sys.argv)
     window = DepthVolumeCalculatorApp(MODEL_PATH, ROI_POINTS, BRIGHTNESS_INCREASE, CLS_NAME_COLOR)
     window.show()

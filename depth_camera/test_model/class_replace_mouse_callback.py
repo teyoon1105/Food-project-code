@@ -262,16 +262,15 @@ if __name__ == "__main__":
 
     MODEL_DIR = os.path.join(os.getcwd(), 'model')
 
-    model_list = ['1st_1000mix_a1002_best.pt', 
-                  '1st_100scaled_50org_mix_best.pt', 
-                  '1st_500_best.pt', 
-                  '1st_50scaled_100org_mix_best.pt', 
-                  '1st_8000mix_a1002_best.pt', 
-                  '1st_mix_scale_best.pt', 
-                  '1st_seg_original_30blur_a1002_best.pt', 
-                  '1st_seg_original_30sharp_a1002_best.pt', 
-                  '1st_seg_original_a1002_best.pt', 
-                  '1st_seg_scaled_a1002_best.pt']
+    model_list = ['1st_0org_100scale_1000mix_200_32_a100.pt', 
+                  '1st_100org_0scale_0mix_500_32_2080.pt', 
+                  '1st_100org_0scale_1000mix_200_96_a1002.pt', 
+                  '1st_100org_0scale_8000mix_200_96_a1002.pt', 
+                  '1st_100org_50scale_0mix_500_32_a100.pt', 
+                  '1st_100org_50scale_1000mix_500_32_a100.pt', 
+                  '1st_50org_100scale_1000mix_blur_200_32_a100.pt', 
+                  '1st_50org_100scale_1000mix_sharp_200_32_a100.pt'
+                  ]
 
     model_name = model_list[1]
     MODEL_PATH = os.path.join(MODEL_DIR, model_name)

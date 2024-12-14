@@ -15,23 +15,19 @@ logging.getLogger("ultralytics").setLevel(logging.WARNING)
 Now_path = os.getcwd()
 model_folder = os.path.join(Now_path, 'model')
 
-model_list = ['100scaled_only_best.pt', 
-              '1st_1000mix_a1002_best.pt', 
-              '1st_100scaled_50org_mix_best.pt', 
-              '1st_500_best.pt', 
-              '1st_50scaled_100org_mix_best.pt', 
-              '1st_8000mix_a1002_best.pt', 
-              '1st_mix_scale_best.pt', 
-              '1st_seg_original_30blur_a1002_best.pt', 
-              '1st_seg_original_30sharp_a1002_best.pt', 
-              '1st_seg_original_a1002_best.pt', 
-              '1st_seg_scaled_a1002_best.pt', 
-              '3rd_10gb_data_best.pt', 
-              'blur_best.pt', 
-              'sharp_best.pt'
-              ]
+model_list = ['1st_0org_100scale_1000mix_200_32_a100.pt', 
+                  '1st_100org_0scale_0mix_500_32_2080.pt', 
+                  '1st_100org_0scale_1000mix_200_96_a1002.pt', 
+                  '1st_100org_0scale_8000mix_200_96_a1002.pt', 
+                  '1st_100org_50scale_0mix_500_32_a100.pt', 
+                  '1st_100org_50scale_1000mix_500_32_a100.pt', 
+                  '1st_50org_100scale_1000mix_blur_200_32_a100.pt', 
+                  '1st_50org_100scale_1000mix_sharp_200_32_a100.pt', 
+                  'total_0org_100scale_10000mix_200_32_a100_best.pt', 
+                  'total_50org_100scale_10000mix_200_32_a100_best.pt']
 
-model_name = model_list[-3]
+
+model_name = model_list[-1]
 print(f'model, {model_name} is connected')
 MODEL_PATH = os.path.join(model_folder, model_name)
 model = YOLO(MODEL_PATH)
@@ -59,21 +55,25 @@ CLS_NAME_COLOR = {
     '01011001': ('Rice', (255, 0, 255)), # 자주색
     '01012006': ('Black Rice', (255, 0, 255)),
     '01012002': ('Soy bean Rice', (255, 0, 255)),
+    '03011011': ('Pumpkin soup', (255, 0, 255)),
     '04011005': ('Seaweed Soup', (0, 255, 255)),
     '04011007': ('Beef stew', (0, 255, 255)),
     '04017001': ('Soybean Soup', (0, 255, 255)), # 노란색
+    '04011011': ('Fish cake soup', (0, 255, 255)),
     '06012004': ('Tteokgalbi', (0, 255, 0)), # 초록색
     '06012008': ('Beef Bulgogi', (0, 255, 0)),
     '07014001': ('EggRoll', (0, 0, 255)), # 빨간색
     '08011003': ('Stir-fried anchovies', (0, 0, 255)),
     '10012001': ('Chicken Gangjeong', (0, 0, 255)),
     '07013003': ('Kimchijeon', (0, 0, 255)),
+    '08012001': ('Stir-fried Potatoes', (255,255,0)),
     '11013010': ('KongNamul', (255, 255, 0)),
     '11014002': ('Gosari', (255, 255, 0)),
     '11013007': ('Spinach', (255, 255, 0)), # 청록색
     '12011008': ('Kimchi', (100, 100, 100)),
     '12011003': ('Radish Kimchi', (100, 100, 100))
 }
+
 
 # ---- 전역 변수 ----
 save_depth = None  # 기준 깊이 데이터 저장 변수
