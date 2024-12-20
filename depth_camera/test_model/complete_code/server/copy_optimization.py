@@ -8,12 +8,11 @@ from ultralytics import YOLO
 import torch
 import logging
 from server_test import ServerTest
-import queue
-import concurrent.futures
+import time
 
 
 class DepthVolumeCalculator:
-    def __init__(self, model_path, roi_points, brightness_increase, cls_name_color):
+    def __init__(self, model_path, roi_points, cls_name_color, server):
         """
         DepthVolumeCalculator 클래스 초기화
         :param model_path: YOLO 모델 파일 경로
@@ -29,7 +28,7 @@ class DepthVolumeCalculator:
         self.align = None  # 깊이 스트림을 컬러 스트림에 정렬하는 Align 객체
         self.save_depth = None  # 기준 깊이 데이터를 저장할 변수
         self.roi_points = roi_points # 관심 영역 좌표
-        self.brightness_increase = brightness_increase # 밝기 증가 값
+        # self.brightness_increase = brightness_increase # 밝기 증가 값
         self.cls_name_color = cls_name_color # 클래스와 색상 매핑 정보 딕셔너리
         self.model_path = model_path # 모델 경로
         self.model_name = os.path.basename(model_path)  # 모델 이름만 추출
@@ -43,6 +42,17 @@ class DepthVolumeCalculator:
             print(f"Error loading YOLO model: {e}") 
             exit(1) # 모델 로드 실패시 종료(출력을 보고 모델 로드 실패 확인)
 
+        # server
+        try:
+            self.server_test = server
+            print("Server OK")
+        except Exception as e:
+            print(f"=======DepthVolumeCalculator __init__ error : {e}")
+
+
+
+
+
     # realsense 카메라 로드 및 예외처리
     def initialize_camera(self):
         """카메라 초기화"""
@@ -53,10 +63,6 @@ class DepthVolumeCalculator:
         except Exception as e:
             print(f"Failed to initialize camera: {e}")
             exit(1) # 로드 실패 시 종료 및 원인 판단
-
-    def mouse_callback(self, event, x, y, flags, param):
-        if event == cv2.EVENT_LBUTTONDOWN:  # 마우스 좌클릭 이벤트
-            print((x,y))
 
     # 프레임 받고 프레임 정렬처리
     def capture_frames(self):
@@ -125,31 +131,30 @@ class DepthVolumeCalculator:
                     depth_image[y, x] = 0  # 유효한 값이 없으면 0으로 설정
         return depth_image
 
-    def process_object(self, result, idx, cropped_depth, depth_intrin, save_depth, roi_shape):
+    def calculate_volume(self, cropped_depth, mask_indices, depth_intrin, min_depth_cm=20):
         """
-        각 객체에 대해 부피 계산 작업 수행 (스레드에서 실행)
+        객체의 부피 계산
+        :param cropped_depth: ROI로 크롭된 깊이 이미지
+        :param mask_indices: 객체 마스크 좌표
+        :param depth_intrin: 깊이 카메라 내부 파라미터
+        :param min_depth_cm: 최소 깊이 값(cm)
+        :return: 객체의 부피(cm^3)
         """
-        try:
-            mask = result.masks.data.cpu().numpy()[idx]
-            resized_mask = cv2.resize(mask, roi_shape[::-1], interpolation=cv2.INTER_NEAREST)
-            mask_indices = np.where(resized_mask > 0.5)
-            
-            z_cm = cropped_depth[mask_indices] / 10.0
-            base_z_cm = save_depth[mask_indices] / 10.0
-            
-            valid_indices = (z_cm > 20) & (base_z_cm > 25)
-            z_cm = z_cm[valid_indices]
-            base_z_cm = base_z_cm[valid_indices]
-            
-            height_cm = np.maximum(0, base_z_cm - z_cm)
-            pixel_area_cm2 = (z_cm ** 2) / (depth_intrin.fx * depth_intrin.fy)
-            volume = np.sum(pixel_area_cm2 * height_cm)
-            return volume, mask_indices
-        except Exception as e:
-            print(f"Error in object processing: {e}")
-            return None, None
+        total_volume = 0 # 부피 초기화
+        y_indices, x_indices = mask_indices # 마스크 좌표값
 
-    def visualize_results(self, cropped_image, object_name, volume, conf,color, mask_indices, blended_image):
+        for y, x in zip(y_indices, x_indices): # 각 좌표를 순회
+            z_cm = cropped_depth[y, x] / 10 # 깊이 값을 cm로 변환
+            base_depth_cm = self.save_depth[y, x] / 10 # 해당 좌표에 저장된 깊이
+
+            if z_cm > min_depth_cm and base_depth_cm > 25: # 최소값 필터링
+                height_cm = max(0, base_depth_cm - z_cm) # 높이 계산
+                pixel_area_cm2 = (z_cm ** 2) / (depth_intrin.fx * depth_intrin.fy) # 픽셀의 면적 계산
+                total_volume += pixel_area_cm2 * height_cm # 부피 계산
+
+        return total_volume
+
+    def visualize_results(self, cropped_image, object_name, volume, conf, color, mask_indices, blended_image):
         """
         탐지 결과를 시각화
         :param cropped_image: 크롭된 컬러 이미지
@@ -177,7 +182,8 @@ class DepthVolumeCalculator:
         texts = [
                 f"{object_name}",
                 f"V:{volume:.0f}cm^3",
-                f"C:{conf:.2f}"
+                f"C:{conf:.2f}",
+                # f"G:{obj_kg:.2f}"
                 ]
         text_sizes = []
         total_height = 0
@@ -201,88 +207,140 @@ class DepthVolumeCalculator:
         return cv2.addWeighted(blended_image, 1, color_filled_image, 0.5, 0) # 이미지 합성
 
     def main_loop(self):
-        """
-        메인 처리 루프
-        """
+        """메인 처리 루프"""
         self.initialize_camera()
-        volume_results = queue.Queue()  # 계산 결과를 저장할 큐
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)  # 동시 실행 스레드 수
 
-        if os.path.exists("save_depth.npy"):
-            self.save_depth = np.load("save_depth.npy")
-            print("Loaded saved depth data.")
+        current_detected_objects = set()  # 현재 탐지된 객체를 저장 (지속적으로 유지)
+
+        # 실시간으로 값 가져오기기
+        weight_list = []
+        avg_weight = 0
+        
+
+        # save_depth 로드 또는 저장
+        if os.path.exists('save_depth.npy'):
+            self.save_depth = np.load('save_depth.npy')  # 저장된 깊이 값 로드
+            print("Loaded saved depth data from file.")
         else:
             print("No saved depth data found. Please save depth data.")
 
         try:
             while True:
-                depth_frame, color_frame = self.capture_frames()
-                if not depth_frame or not color_frame:
+                depth_frame, color_frame = self.capture_frames() # 깊이, 컬러 스트림 받아오기
+                if not depth_frame or not color_frame: # 없으면 다음 반복
                     continue
 
-                depth_image, color_image = self.preprocess_images(depth_frame, color_frame)
-                cropped_depth = self.apply_roi(depth_image)
-                roi_color = self.apply_roi(color_image)
-                blended_image = roi_color.copy()
+                depth_image, color_image = self.preprocess_images(depth_frame, color_frame) # 깊이, 컬러 스트림 전처리
+                cropped_depth = self.apply_roi(depth_image) # ROI 좌표에 맞게 자르기
+                roi_color = self.apply_roi(color_image) # ROI 좌표에 맞게 자르기
 
-                results = self.model(roi_color)  # YOLO 모델 추론
-                depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
+                # ROI 표시
+                cv2.rectangle(color_image, self.roi_points[0], self.roi_points[1], (0, 0, 255), 2)
+                cv2.imshow('Color Image with ROI', color_image)
 
-                # YOLO 결과를 병렬로 처리
-                futures = []
-                if results[0].masks is not None:
-                    num_objects = len(results[0].masks.data.cpu().numpy())
-                    for i in range(num_objects):
-                        # 스레드에 작업 전달
-                        future = executor.submit(
-                            self.process_object,
-                            results[0],  # YOLO 결과 객체
-                            i,  # 객체 인덱스
-                            cropped_depth,
-                            depth_intrin,
-                            self.save_depth,
-                            (roi_color.shape[1], roi_color.shape[0])
-                        )
-                        futures.append((future, i))
+                # 밝기 증가
+                # brightened_image = cv2.convertScaleAbs(roi_color, alpha=1.2, beta=self.brightness_increase)
+                results = self.model(roi_color) # yolo에 ROI 영역, 밝기 증가시킨 이미지 입력
+                blended_image = roi_color.copy() # 마스크를 합성할 이미지 복사
+                # detected_objects_in_frame = []  # 현재 프레임에서 탐지된 객체만 임시 저장하기 위한 리스트
 
-                # 스레드 결과 처리 및 시각화
-                for future, idx in futures:
-                    try:
-                        volume, mask_indices = future.result()  # 결과 가져오기
-                        if volume is not None:
-                            object_name = self.model.names[int(results[0].boxes.cls[idx])]
-                            conf = results[0].boxes.conf[idx].item()
-                            color = self.cls_name_color.get(object_name, ("Unknown", (255, 255, 255)))[1]
+            #===========================================================
+
+                # 실시간 무게값 가져오기
+                onair_weight = self.server_test.get_weight()
+                print(onair_weight)
+                print(type(onair_weight))
+
+            #============================================================
+
+                for result in results:
+                    if result.masks is not None:
+                        # 탐지된 마스크들
+                        masks = result.masks.data.cpu().numpy() 
+                        classes = result.boxes.cls.cpu().numpy()
+                        
+                        # 탐지된 마스크를 순회하며 enumerate로 번호 매김
+                        for i, mask in enumerate(masks):
+                            conf = result.boxes.conf[i] # 해당 번호의 객체 conf 값 받아오기
+                            resized_mask = cv2.resize(mask, (roi_color.shape[1], roi_color.shape[0])) # 결과값의 마스크는 원본 ROI 영역과 크기가 다름, 맞추기
+                            color_mask = (resized_mask > 0.5).astype(np.uint8) # 넘파이 배열에서 0.5 이상이 되는 부분만 color mask로 배열 저장
+                            class_key = self.model.names[int(classes[i])] # 객체 번호에 해당하는 객체 이름 가져오기
+                            object_name, color = self.cls_name_color.get(class_key, ("Unknown", (255, 255, 255))) # 객체 이름을 키값으로 삼아 딕셔너리에서 이름과 컬러 가져오기
+
+
+
+
                             
-                            blended_image = self.visualize_results(
-                                roi_color,
-                                object_name,
-                                volume,
-                                conf,
-                                color,
-                                mask_indices,
-                                blended_image
-                            )
-                    except Exception as e:
-                        print(f"Error processing result: {e}")
+                            # cnt_before = len(current_detected_objects) # 0
+                            # print(f"cnt_before1 = {cnt_before}")
+                            # 객체 이름만 저장
+                            if object_name not in current_detected_objects:
+                                weight_list = []
+                                print(f"New object detected: {object_name}")
+                                current_detected_objects.add(object_name)
+                                # cnt_after = len(current_detected_objects) # 1
 
-                # 결과 표시
-                cv2.imshow("Segmented Mask with Heights", blended_image)
+                            # if cnt_before
+                            weight_list.append(onair_weight)
+                            avg_weight = sum(weight_list) / len(weight_list)
+
+                            print("================================")
+                            print(f"weight_list = {weight_list}")
+                            print(f"avg_weight = {avg_weight}")
+                            print("================================")
+
+                                # result_rice = self.server_test.get_weight(object_name)
+                                # print(f"result_rice = {result_rice[-1]}")
+                                # obj_kg = result_rice[-1]
+                                
+                            # 컬러 마스크에 대항하는 마스크 좌표 가져오기
+                            mask_indices = np.where(color_mask > 0)
+
+                            # 저장된 깊이가 없다면 다음 반복
+                            if not self.is_depth_saved():
+                                self.display_message(color_image, "Save your depth first!")
+                                continue
+                            
+                             # **중앙값 기반의 보정 수행**
+                            cropped_depth = self.replace_invalid_depth_values_in_mask(cropped_depth, mask_indices, threshold=400)
+
+                            # 내장 파라미터에서 초점거리 가져오기           
+                            depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
+                            # 부피계산
+                            volume = self.calculate_volume(cropped_depth, mask_indices, depth_intrin)
+                            
+                            # blended_image = self.visualize_results(roi_color, object_name,
+                            #                                       volume, conf, color, obj_kg, mask_indices, blended_image)
+                            
+                            blended_image = self.visualize_results(roi_color, object_name,
+                                                                   volume, conf, color, mask_indices, blended_image)
+
+
+                # 
+
+
+
+
+                # 결과 이미지 표시
+                cv2.imshow('Segmented Mask with Heights', blended_image)
 
                 key = cv2.waitKey(10) & 0xFF
                 if key == 27:  # ESC 키
                     break
-                elif key == ord("s"):  # 깊이 데이터 저장
+
+                elif key == ord('s'):  # 깊이 데이터 저장
                     self.save_depth = cropped_depth.copy()
-                    np.save("save_depth.npy", self.save_depth)
-                    print("Depth data saved!")
+                    np.save('save_depth.npy', self.save_depth)
+                    print("Depth image saved!")
+                    
 
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            print(f"An unexpected error occurred in the main loop: {e}")
+
         finally:
             self.pipeline.stop()
-            executor.shutdown(wait=True)
             cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     # 로그 레벨 설정 (INFO 메시지 비활성화)
@@ -314,22 +372,26 @@ if __name__ == "__main__":
 
     MODEL_DIR = os.path.join(os.getcwd(), 'model')
 
-    model_list = ['1st_0org_100scale_1000mix_200_32_a100.pt', 
-                  '1st_100org_0scale_0mix_500_32_2080.pt', 
-                  '1st_100org_0scale_1000mix_200_96_a1002.pt', 
-                  '1st_100org_0scale_8000mix_200_96_a1002.pt', 
-                  '1st_100org_50scale_0mix_500_32_a100.pt', 
-                  '1st_100org_50scale_1000mix_500_32_a100.pt', 
-                  '1st_50org_100scale_1000mix_blur_200_32_a100.pt', 
-                  '1st_50org_100scale_1000mix_sharp_200_32_a100.pt', 
-                  'total_0org_100scale_10000mix_200_32_a100_best.pt', 
-                  'total_50org_100scale_10000mix_200_32_a100_best.pt']
 
-    model_name = model_list[-1]
-    MODEL_PATH = os.path.join(MODEL_DIR, model_name)
+    model_list = [
+                '1st_0org_100scale_1000mix_200_32_a100.pt', 
+                '1st_100org_0scale_0mix_500_32_2080.pt', 
+                '1st_100org_0scale_1000mix_200_96_a1002.pt',
+                '1st_100org_0scale_8000mix_200_96_a1002.pt', 
+                '1st_100org_50scale_0mix_500_32_a100.pt',
+                '1st_100org_50scale_1000mix_500_32_a100.pt',
+                '1st_50org_100scale_1000mix_blur_200_32_a100.pt',
+                '1st_50org_100scale_1000mix_sharp_200_32_a100.pt', 
+                'total_0org_100scale_10000mix_200_32_a100_best.pt', 
+                'total_50org_100scaled_10000mix_700_96_a1002_best.pt', 
+                'total_50org_100scale_10000mix_200_32_a100_best.pt']
+
+    model_name = model_list[-2]
+    MODEL_PATH = 'C:/Users/SBA/teyoon_github/Food-project-code/depth_camera/test_model/model/total_50org_100scale_10000mix_200_32_a100_best.pt'
     
     ROI_POINTS = [(175, 50), (1055, 690)]
-    BRIGHTNESS_INCREASE = 10
+    # BRIGHTNESS_INCREASE = 10
 
-    calculator = DepthVolumeCalculator(MODEL_PATH, ROI_POINTS, BRIGHTNESS_INCREASE, CLS_NAME_COLOR)
+    server_test = ServerTest()
+    calculator = DepthVolumeCalculator(MODEL_PATH, ROI_POINTS, CLS_NAME_COLOR, server=server_test)
     calculator.main_loop()

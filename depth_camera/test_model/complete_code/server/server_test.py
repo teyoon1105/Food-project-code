@@ -42,7 +42,10 @@ class ServerTest:
             
         except Exception as e:
             print(f"Error sending data: {e}")           
-        
+
+    def get_weight_avg(self, food, weight):
+        weight = weight
+
     def server_close(self):
         self.client.close()
             
