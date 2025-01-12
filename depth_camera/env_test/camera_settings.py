@@ -4,6 +4,7 @@ import pyrealsense2 as rs
 # 카메라 초점거리(하드웨어값) 변수값으로 사용하기 위해 확인
 
 def extract_camera_intrinsics():
+    # 카메라 파이프라인 객체
     pipeline = rs.pipeline()
     # 카메라 설정 객체 
     config = rs.config()
