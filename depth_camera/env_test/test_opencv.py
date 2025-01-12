@@ -1,7 +1,9 @@
 import cv2
 
-img_path = "D:/food_detection/train_16/brown seaweed_soup/04011005_train/04_041_04011005_160273319870986.jpeg"
+# opencv library test 코드
+# img 위에 개행 효과를 사용하여 putText
 
+img_path = "path/your/img"
 img = cv2.imread(img_path)
 
 
