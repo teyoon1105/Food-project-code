@@ -6,6 +6,7 @@ from ultralytics import YOLO  # YOLO 객체 탐지 라이브러리
 import logging  # 로그 메시지 출력을 위한 라이브러리
 import torch
 
+# d455 카메라 테스트
 # 로그 레벨 설정 (INFO 메시지 비활성화)
 logging.getLogger("ultralytics").setLevel(logging.WARNING)
 
