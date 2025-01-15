@@ -14,6 +14,7 @@ MODEL_PATH = os.path.join(os.getcwd(), 'best.pt')
 model = YOLO(MODEL_PATH)
 
 # Intel RealSense 카메라 설정
+# d435i 기준 코드
 pipeline = rs.pipeline() # 파이프라인 생성
 config = rs.config() # 카메라 설정 객체 생성
 config.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30) # 깊이 스트림 설정
@@ -43,7 +44,6 @@ CLS_NAME_COLOR = {
 
 # ---- 전역 변수 ----
 save_depth = None  # 기준 깊이 데이터 저장 변수
-
 
 # ---- 함수 정의 ----
 def initialize_camera():
