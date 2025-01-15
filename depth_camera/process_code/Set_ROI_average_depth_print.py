@@ -6,6 +6,7 @@ import cv2
 pipeline = rs.pipeline()
 config = rs.config()
 
+# d455 기준 코드
 # 두 스트림 모두 너비, 높이를 640, 480로 받아옴
 config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
