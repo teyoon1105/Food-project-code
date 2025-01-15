@@ -14,6 +14,7 @@ model_path = os.path.join(Now_Path, 'best.pt')
 model = YOLO(model_path)  # YOLO 모델 로드
 
 # RealSense 카메라 스트림 설정
+# d435i 기준 코드
 pipeline = rs.pipeline()
 config = rs.config()
 config.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)  # 깊이 스트림 설정
@@ -25,14 +26,6 @@ align = rs.align(align_to)
 
 # 관심 영역 (ROI) 좌표 설정
 roi_pts = [(410, 180), (870, 540)]
-
-# 비디오 저장 설정 (필요시 사용 가능)
-# 코덱 설정, 프레임 속도 및 ROI 크기 설정
-# fourcc = cv2.VideoWriter_fourcc(*'XVID')
-# fps = 30.0
-# width = roi_pts[1][0] - roi_pts[0][0]
-# height = roi_pts[1][1] - roi_pts[0][1]
-# out = cv2.VideoWriter('cropped_output.avi', fourcc, fps, (width, height))
 
 brightness_increase = 50  # 밝기 증가 값 (0~255)
 
@@ -166,4 +159,3 @@ try:
 finally:
     pipeline.stop()
     cv2.destroyAllWindows()
-    # out.release()  # 비디오 writer 해제
