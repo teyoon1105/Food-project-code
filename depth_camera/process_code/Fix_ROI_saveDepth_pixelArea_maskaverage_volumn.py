@@ -14,6 +14,7 @@ model_path = os.path.join(Now_Path, 'best.pt')  # YOLO 모델 파일 경로
 model = YOLO(model_path)  # YOLO 모델 로드
 
 # Intel RealSense 카메라 스트림을 설정
+# d435i 기준 코드
 pipeline = rs.pipeline()  # 파이프라인 생성
 config = rs.config()  # 설정 객체 생성
 config.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 30)  # 깊이 스트림 설정
