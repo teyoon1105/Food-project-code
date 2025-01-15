@@ -4,7 +4,7 @@ import cv2
 from ultralytics import YOLO
 
 # YOLO Segmentation 모델 로드
-model_path = "C:/Users/SBA/teyoon_github/Food-project-code/depth_camera/best.pt"
+model_path = "path/your/model.pt"
 model = YOLO(model_path)  # 학습된 YOLO Segmentation 모델 사용
 
 
