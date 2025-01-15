@@ -2,6 +2,7 @@ import pyrealsense2 as rs
 import numpy as np
 import cv2
 
+# d455 기준 코드
 # 파이프라인 설정 (깊이 및 컬러 스트림 활성화)
 pipeline = rs.pipeline()
 config = rs.config()
