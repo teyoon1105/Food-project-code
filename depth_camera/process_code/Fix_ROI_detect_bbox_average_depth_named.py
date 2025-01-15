@@ -13,6 +13,7 @@ model = YOLO(model_path)  # 학습된 YOLOv8 분할 모델 로드
 pipeline = rs.pipeline()
 config = rs.config()
 
+# d455 기준 코드
 # 깊이 및 컬러 스트림 활성화 (해상도 640x480, 프레임 레이트 30fps)
 config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
