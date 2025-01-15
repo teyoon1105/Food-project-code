@@ -4,10 +4,13 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import numpy as np
 
-x = 1280  # x 범위 (0 ~ 9)
-y = 720  # y 범위 (0 ~ 19)
-z = 60 # z 범위 (0 ~ 29)
-n = 200  # 생성할 좌표 개수
+# ConvexHull 라이브러리 사용하여 다면체 부피 구하기
+# 심긱뿔의 부피를 더해서 구하는 방식
+
+x = 9  # x 범위 (0 ~ 9)
+y = 16  # y 범위 (0 ~ 19)
+z = 25 # z 범위 (0 ~ 29)
+n = 20  # 생성할 좌표 개수
 
 # 각 차원의 최댓값을 리스트로 지정합니다.
 high = [x, y, z]
