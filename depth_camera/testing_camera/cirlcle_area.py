@@ -28,15 +28,6 @@ align = rs.align(align_to)
 # 관심 영역 (ROI) 좌표 설정
 roi_pts = [(175, 50), (1055, 690)]
 
-
-# # 비디오 저장 설정
-# # 필요시에 사용
-# fourcc = cv2.VideoWriter_fourcc(*'XVID')  # 코덱 설정 (적절한 코덱 사용)
-# fps = 30.0  # 프레임 레이트
-# width = roi_pts[1][0] - roi_pts[0][0]  # ROI 너비
-# height = roi_pts[1][1] - roi_pts[0][1] # ROI 높이
-# out = cv2.VideoWriter('cropped_output.avi', fourcc, fps, (width, height)) # 파일명, 코덱, 프레임 레이트, 크기
-
 # 클래스 ID와 이름, 색상을 매핑
 cls_name_color = {
     '01011001': ('Rice', (255, 0, 255)),  # 보라색
@@ -232,4 +223,3 @@ try:
 finally:
     pipeline.stop()  # 파이프라인 정지
     cv2.destroyAllWindows()  # 모든 OpenCV 창 닫기
-    # out.release() # 비디오 writer 해제
