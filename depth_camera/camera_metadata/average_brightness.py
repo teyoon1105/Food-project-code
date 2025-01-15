@@ -3,10 +3,11 @@ import cv2
 import numpy as np
 import time
 
+# 카메라의 노출 및 밝기등 계산
 # 파이프라인 설정
 pipeline = rs.pipeline()
 config = rs.config()
-config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
 
 # 스트림 시작
 pipeline.start(config)
