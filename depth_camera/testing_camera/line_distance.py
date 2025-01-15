@@ -28,14 +28,6 @@ align = rs.align(align_to)
 # 관심 영역 (ROI) 좌표 설정
 roi_pts = [(410, 180), (870, 540)]
 
-# # 비디오 저장 설정
-# # 필요시에 사용
-# fourcc = cv2.VideoWriter_fourcc(*'XVID')  # 코덱 설정 (적절한 코덱 사용)
-# fps = 30.0  # 프레임 레이트
-# width = roi_pts[1][0] - roi_pts[0][0]  # ROI 너비
-# height = roi_pts[1][1] - roi_pts[0][1] # ROI 높이
-# out = cv2.VideoWriter('cropped_output.avi', fourcc, fps, (width, height)) # 파일명, 코덱, 프레임 레이트, 크기
-
 # 클래스 ID와 이름, 색상을 매핑
 cls_name_color = {
     '01011001': ('Rice', (255, 0, 255)),  # 보라색
@@ -132,39 +124,6 @@ try:
                     if save_depth is None:
                         print("Baseline depth not set. Please click to set it.")
                         continue
-
-                    # # 원의 중심 좌표 (미리 지정)
-                    # center_x, center_y = 525 - x1, 430 - y1  #roi를 기준으로 중심점 좌표 보정, 전역변수에서 가져오도록 수정 필요
-
-                    # # 가장 먼 마스크 좌표 찾기
-                    # max_distance = 0
-                    # farthest_x = 0
-                    # farthest_y = 0
-                    # for y, x in zip(y_indices, x_indices) :
-                    #     distance = math.sqrt((x-center_x)**2 + (y-center_y)**2)
-                    #     if max_distance<distance :
-                    #         max_distance = distance
-                    #         farthest_x = x
-                    #         farthest_y = y
-                    
-                    # # 계산된 반지름 (픽셀 단위)
-                    # measured_radius_pixels = max_distance
-
-                    # # 실제 반지름 (실제 세계 단위 - 미리 측정)
-                    # real_radius = 6.4  # 예시 - 실제 원의 반지름 (cm)
-
-                    # # 픽셀 크기 계산 (실제 세계 단위/픽셀) - 이 부분은 카메라 설정과 객체의 깊이에 따라 다릅니다.
-                    # if cropped_depth_image[farthest_y, farthest_x] > 0:
-                    #     z_cm_circle = cropped_depth_image[farthest_y, farthest_x] / 10 # 객체의 깊이 (cm)
-                        
-                    #     depth_intrin = aligned_depth_frame.profile.as_video_stream_profile().intrinsics
-                    #     pixel_size = (z_cm_circle) / depth_intrin.fx  # 예시 - 픽셀 크기 계산
-
-                    #     # 계산된 반지름 (실제 세계 단위)
-                    #     measured_radius = measured_radius_pixels * pixel_size
-
-                    #     circle_area = math.pi * measured_radius ** 2
-                    #     print(circle_area)
 
                     # 직선의 길이 가로
                     line_x1, line_y1 = 520 - x1, 340 - y1
@@ -263,4 +222,3 @@ try:
 finally:
     pipeline.stop()  # 파이프라인 정지
     cv2.destroyAllWindows()  # 모든 OpenCV 창 닫기
-    # out.release() # 비디오 writer 해제
