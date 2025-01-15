@@ -6,11 +6,11 @@ from ultralytics import YOLO
 
 # 현재 경로 및 모델 파일 경로
 Now_Path = os.getcwd()
-model_path = os.path.join(Now_Path, 'large_epoch200.pt')  # YOLO 모델 파일 경로
+model_path = os.path.join(Now_Path, 'best.pt')  # YOLO 모델 파일 경로
 model = YOLO(model_path)  # YOLO 모델 로드
 
 # 이미지 경로
-img_path = "C:/Users/SBA/teyoon_github/github/Food-project-code/depth_camera/testing_camera/frame_20241217-133446.jpg"
+img_path = "path/your/image.jpg"
 img = cv2.imread(img_path)
 
 # 클래스 이름 정의
