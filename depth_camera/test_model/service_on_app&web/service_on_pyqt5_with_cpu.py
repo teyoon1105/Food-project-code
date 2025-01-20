@@ -10,7 +10,7 @@ from ultralytics import YOLO
 import torch
 import logging
 
-
+# gpt를 이용해서
 class DepthVolumeCalculatorApp(QWidget):
     def __init__(self, model_path, roi_points, brightness_increase, cls_name_color):
         super().__init__()
