@@ -243,6 +243,7 @@ if __name__ == "__main__":
     # 로그 레벨 설정 (INFO 메시지 비활성화)
     logging.getLogger("ultralytics").setLevel(logging.WARNING)
 
+    # class name for mapping
     CLS_NAME_COLOR = {
     '01011001': ('Rice', (255, 0, 255)), # 자주색
     '01012006': ('Black Rice', (255, 0, 255)),
@@ -268,6 +269,7 @@ if __name__ == "__main__":
 
     MODEL_DIR = os.path.join(os.getcwd(), 'model')
 
+    # model pt file's list
     model_list = ['1st_0org_100scale_1000mix_200_32_a100.pt', 
                   '1st_100org_0scale_0mix_500_32_2080.pt', 
                   '1st_100org_0scale_1000mix_200_96_a1002.pt',
