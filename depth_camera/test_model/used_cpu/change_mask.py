@@ -329,18 +329,6 @@ if __name__ == "__main__":
 
 
     MODEL_DIR = os.path.join(os.getcwd(), 'model')
-
-    # model_list = ['1st_0org_100scale_1000mix_200_32_a100.pt', 
-    #               '1st_100org_0scale_0mix_500_32_2080.pt', 
-    #               '1st_100org_0scale_1000mix_200_96_a1002.pt', 
-    #               '1st_100org_0scale_8000mix_200_96_a1002.pt', 
-    #               '1st_100org_50scale_0mix_500_32_a100.pt', 
-    #               '1st_100org_50scale_1000mix_500_32_a100.pt', 
-    #               '1st_50org_100scale_1000mix_blur_200_32_a100.pt', 
-    #               '1st_50org_100scale_1000mix_sharp_200_32_a100.pt', 
-    #               'total_0org_100scale_10000mix_200_32_a100_best.pt', 
-    #               'total_50org_100scale_10000mix_200_32_a100_best.pt']
-
     model_list = ['large_epoch300.pt', 
                   'large_epoch200.pt', 
                   ]
