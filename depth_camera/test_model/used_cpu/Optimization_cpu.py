@@ -246,9 +246,7 @@ class DepthVolumeCalculator:
                             if object_name not in current_detected_objects:
                                 print(f"New object detected: {object_name}")
                                 current_detected_objects.add(object_name)
-                                # result_rice = self.server_test.get_weight(object_name)
-                                # print(f"result_rice = {result_rice[-1]}")
-                                # obj_kg = result_rice[-1]
+                                
                                 
                             # 컬러 마스크에 대항하는 마스크 좌표 가져오기
                             mask_indices = np.where(color_mask > 0)
@@ -265,9 +263,6 @@ class DepthVolumeCalculator:
                             depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
                             # 부피계산
                             volume = self.calculate_volume(cropped_depth, mask_indices, depth_intrin)
-                            
-                            # blended_image = self.visualize_results(roi_color, object_name,
-                            #                                       volume, conf, color, obj_kg, mask_indices, blended_image)
                             
                             blended_image = self.visualize_results(roi_color, object_name,
                                                                    volume, conf, color, mask_indices, blended_image)
@@ -297,6 +292,7 @@ if __name__ == "__main__":
     # 로그 레벨 설정 (INFO 메시지 비활성화)
     logging.getLogger("ultralytics").setLevel(logging.WARNING)
 
+    # class name for mapping
     CLS_NAME_COLOR = {
     '01011001': ('Rice', (255, 0, 255)), # 자주색
     '01012006': ('Black Rice', (255, 0, 255)),
@@ -323,20 +319,7 @@ if __name__ == "__main__":
 
     MODEL_DIR = os.path.join(os.getcwd(), 'model')
 
-
-    # model_list = ['1st_0org_100scale_1000mix_200_32_a100.pt', 
-    #               '1st_100org_0scale_0mix_500_32_2080.pt', 
-    #               '1st_100org_0scale_1000mix_200_96_a1002.pt', 
-    #               '1st_100org_0scale_8000mix_200_96_a1002.pt', 
-    #               '1st_100org_50scale_0mix_500_32_a100.pt', 
-    #               '1st_100org_50scale_1000mix_500_32_a100.pt', 
-    #               '1st_50org_100scale_1000mix_blur_200_32_a100.pt', 
-    #               '1st_50org_100scale_1000mix_sharp_200_32_a100.pt', 
-    #               'large_epoch200.pt', 
-    #               'total_0org_100scale_10000mix_200_32_a100_best.pt', 
-    #               'total_50org_100scaled_10000mix_700_96_a1002_best.pt', 
-    #               'total_50org_100scale_10000mix_200_32_a100_best.pt']
-
+    # model pt file's list(simplification)
     model_list = ['large_epoch300.pt', 
                   'large_epoch200.pt', 
                   ]
