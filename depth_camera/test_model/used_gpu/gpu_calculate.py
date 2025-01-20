@@ -148,7 +148,7 @@ class DepthVolumeCalculator:
 if __name__ == "__main__":
     # 로그 레벨 설정 (INFO 메시지 비활성화)
     logging.getLogger("ultralytics").setLevel(logging.WARNING)
-    MODEL_PATH = os.path.join(os.getcwd(), 'model', "total_50org_100scaled_10000mix_700_96_a1002_best.pt")
+    MODEL_PATH = os.path.join(os.getcwd(), 'model', "path/your/model.pt")
     ROI_POINTS = [(175, 50), (1055, 690)]
     CLS_NAME_COLOR = {
     '01011001': ('Rice', (255, 0, 255)), # 자주색
