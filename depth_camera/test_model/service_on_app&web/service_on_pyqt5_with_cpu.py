@@ -206,9 +206,11 @@ if __name__ == "__main__":
     # 로그 레벨 설정 (INFO 메시지 비활성화)
     logging.getLogger("ultralytics").setLevel(logging.WARNING)
 
-    MODEL_PATH = "C:/Users/SBA/teyoon_github/Food-project-code/depth_camera/test_model/model/1st_mix_scale_best.pt"
+    MODEL_PATH = "path/your/model.pt"
     ROI_POINTS = [(175, 50), (1055, 690)]
     BRIGHTNESS_INCREASE = 50
+    
+    # class name for mapping
     CLS_NAME_COLOR = {
     '01011001': ('Rice', (255, 0, 255)), # 자주색
     '01012006': ('Black Rice', (255, 0, 255)),
