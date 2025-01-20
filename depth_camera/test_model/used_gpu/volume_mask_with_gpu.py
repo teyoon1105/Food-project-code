@@ -331,7 +331,7 @@ if __name__ == "__main__":
     # yolo 내부 로그 일시 차단
     logging.getLogger("ultralytics").setLevel(logging.WARNING)
 
-    # 객체의 출력 이름과 실제 객체의 이름, 색 매핑
+    # class name for mapping
     CLS_NAME_COLOR = {
     '01011001': ('Rice', (255, 0, 255), 0),  # Steamed Rice
     '04017001': ('Soybean Soup', (0, 255, 255), 1),  # Soybean Paste Stew
@@ -355,7 +355,7 @@ if __name__ == "__main__":
     '08012001': ('Stir-fried Potatoes', (255, 255, 0), 19)  # Stir-fried Potatoes
 }
     # 모델 경로 설정
-    MODEL_PATH = os.path.join(os.getcwd(), 'model', "large_epoch200.pt")
+    MODEL_PATH = os.path.join(os.getcwd(), 'model', "path/your/model.pt")
 
     # ROI 설정
     ROI_POINTS = [(175, 50), (1055, 690)]
