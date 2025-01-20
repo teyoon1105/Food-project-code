@@ -265,6 +265,8 @@ class DepthVolumeCalculator:
 
 if __name__ == "__main__":
     logging.getLogger("ultralytics").setLevel(logging.WARNING)
+
+    # class name for mapping
     CLS_NAME_COLOR = {
     '01011001': ('Rice', (255, 0, 255), 0),  # Steamed Rice
     '04017001': ('Soybean Soup', (0, 255, 255), 1),  # Soybean Paste Stew
@@ -287,7 +289,7 @@ if __name__ == "__main__":
     '03011011': ('Pumpkin Soup', (255, 0, 255), 18),  # Pumpkin Porridge
     '08012001': ('Stir-fried Potatoes', (255, 255, 0), 19)  # Stir-fried Potatoes
 }
-    MODEL_PATH = os.path.join(os.getcwd(), 'model', "large_epoch300.pt")
+    MODEL_PATH = os.path.join(os.getcwd(), 'model', "path/your/model.pt")
     ROI_POINTS = [(175, 50), (1055, 690)]
     calculator = DepthVolumeCalculator(MODEL_PATH, ROI_POINTS, CLS_NAME_COLOR)
     calculator.main_loop()
