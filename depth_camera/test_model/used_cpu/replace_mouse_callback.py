@@ -14,6 +14,7 @@ logging.getLogger("ultralytics").setLevel(logging.WARNING)
 # YOLO 모델 경로 및 초기화
 MODEL_DIR = os.path.join(os.getcwd(), 'model')
 
+# model pt file's list
 model_list = ['1st_0org_100scale_1000mix_200_32_a100.pt', 
                   '1st_100org_0scale_0mix_500_32_2080.pt', 
                   '1st_100org_0scale_1000mix_200_96_a1002.pt', 
@@ -226,10 +227,7 @@ def main():
                 if obj not in current_detected_objects:  # 새로운 객체만 추가
                     print(f"New object detected: {obj}")
                     # send_to_scale([obj])  # 새로운 객체 전송
-                    current_detected_objects.append(obj)
-
-             # 이전 상태 업데이트 (현재 프레임에서 유지되는 객체만 남김)
-            previous_detected_objects = detected_objects_in_frame.copy()          
+                    current_detected_objects.append(obj)      
 
             # 결과 이미지 표시
             cv2.imshow('Segmented Mask with Heights', blended_image)
