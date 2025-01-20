@@ -97,38 +97,10 @@ def main():
     st.sidebar.title("Settings")
 
     # 모델 설정
-    MODEL_DIR = "C:/Users/SBA/teyoon_github/Food-project-code/depth_camera/test_model/model"
+    MODEL_DIR = "path/your/model/directory"
     model_files = [f for f in os.listdir(MODEL_DIR) if f.endswith(".pt")]
     selected_model = st.sidebar.selectbox("Select a YOLO Model", model_files)
     # model_path = os.path.join(MODEL_DIR, selected_model)
-
-    # ROI 설정
-    # roi_x1 = st.sidebar.number_input("ROI X1", value=175, step=5)
-    # roi_y1 = st.sidebar.number_input("ROI Y1", value=50, step=5)
-    # roi_x2 = st.sidebar.number_input("ROI X2", value=1055, step=5)
-    # roi_y2 = st.sidebar.number_input("ROI Y2", value=690, step=5)
-    # roi_points = [(roi_x1, roi_y1), (roi_x2, roi_y2)]
-
-    # 밝기 증가 설정
-    # brightness_increase = st.sidebar.slider("Brightness Increase", min_value=0, max_value=100, value=50)
-
-    # Custom Classes
-    # CLS_NAME_COLOR = {
-    # '01011001': ('Rice', (255, 0, 255)), # 자주색
-    # '01012006': ('Black Rice', (255, 0, 255)),
-    # '04011005': ('Seaweed Soup', (0, 255, 255)),
-    # '04011008': ('Beef stew', (0, 255, 255)),
-    # '04017001': ('Soybean Soup', (0, 255, 255)), # 노란색
-    # '06012004': ('Tteokgalbi', (0, 255, 0)), # 초록색
-    # '06012008': ('Beef Bulgogi', (0, 255, 0)),
-    # '07014001': ('EggRoll', (0, 0, 255)), # 빨간색
-    # '08011003': ('Stir-fried anchovies', (0, 0, 255)),
-    # '10012001': ('Chicken Gangjeong', (0, 0, 255)),
-    # '11014002': ('Gosari', (255, 255, 0)),
-    # '11013007': ('Spinach', (255, 255, 0)), # 청록색
-    # '12011008': ('Kimchi', (100, 100, 100)),
-    # '12011003': ('Radish Kimchi', (100, 100, 100))
-    # }
 
     # 설정 기본값
     default_roi_points = [(175, 50), (1055, 690)]
@@ -155,7 +127,6 @@ def main():
     '12011008': ('Kimchi', (100, 100, 100)),
     '12011003': ('Radish Kimchi', (100, 100, 100))
 }
-
 
     # DepthVolumeCalculator 상태 관리
     if "calculator" not in st.session_state:
@@ -185,12 +156,6 @@ def main():
     calculator.brightness_increase = st.sidebar.slider(
         "Brightness Increase", min_value=0, max_value=100, value=calculator.brightness_increase
     )
-
-   # DepthVolumeCalculator 인스턴스를 세션 상태에 저장
-    # if "calculator" not in st.session_state:
-    #     st.session_state["calculator"] = DepthVolumeCalculator(model_path, roi_points, brightness_increase, CLS_NAME_COLOR)
-
-    # calculator = st.session_state["calculator"]
 
     # 카메라 초기화
     if st.sidebar.button("Initialize Camera"):
