@@ -5,8 +5,6 @@ import os
 from ultralytics import YOLO
 import torch
 import logging
-import hashlib
-from server_test import ServerTest
 
 
 class DepthVolumeCalculator:
