@@ -185,6 +185,7 @@ if __name__ == "__main__":
     # 로그 레벨 설정 (INFO 메시지 비활성화)
     logging.getLogger("ultralytics").setLevel(logging.WARNING)
     
+    # class name for mapping
     CLS_NAME_COLOR = {
     '01011001': ('Rice', (255, 0, 255)), # 자주색
     '01012006': ('Black Rice', (255, 0, 255)),
@@ -208,9 +209,7 @@ if __name__ == "__main__":
     '12011003': ('Radish Kimchi', (100, 100, 100))
     }
 
-
-
-    MODEL_PATH = os.path.join(os.getcwd(), 'model', "large_epoch300.pt")
+    MODEL_PATH = os.path.join(os.getcwd(), 'model', "path/your/model.pt")
     ROI_POINTS = [(175, 50), (1055, 690)]
 
     calculator = DepthVolumeCalculator(MODEL_PATH, ROI_POINTS, CLS_NAME_COLOR)
