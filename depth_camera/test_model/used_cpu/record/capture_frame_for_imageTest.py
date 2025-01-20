@@ -3,7 +3,7 @@ import os
 import time
 
 # ---- 전역 변수 ----
-video_path = "C:/Users/SBA/teyoon_github/Food-project-code/depth_camera/test_model/record/test_model.avi"  # 저장된 영상 파일 경로
+video_path = "path/your/directory"  # 저장된 영상 파일 경로
 save_directory = "saved_frames"  # 프레임 저장 폴더
 os.makedirs(save_directory, exist_ok=True)  # 저장 폴더 생성
 
