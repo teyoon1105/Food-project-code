@@ -15,6 +15,7 @@ logging.getLogger("ultralytics").setLevel(logging.WARNING)
 Now_path = os.getcwd()
 model_folder = os.path.join(Now_path, 'model')
 
+# model pt file's list
 model_list = ['1st_1000mix_a1002_best.pt', 
               '1st_500_best.pt', 
               '1st_8000mix_a1002_best.pt', 
