@@ -44,31 +44,6 @@ def crop_roi(image, roi_points):
     return image[y1:y2, x1:x2] # 컬러 넘파이 배열을 ROI 영역만큼 자른 값 반환
 
 
-def save_video_with_timestamps(frames, timestamps, output_path):
-    """프레임 간 타임스탬프를 기반으로 비디오 저장"""
-    if len(frames) == 0:
-        print("No frames to save.")
-        return
-
-    height, width, _ = frames[0].shape # 저장한 프레임 리스트에서 첫번째 프레임의 shape을 확인
-    fourcc = cv2.VideoWriter_fourcc(*'XVID') # 비디오 녹화 코덱 설정
-    out = cv2.VideoWriter(output_path, fourcc, 30, (width, height))  # 기본 FPS로 초기화
-
-    for i in range(len(frames) - 1): # 기록한 프레임들의 길이만큼 반복(한 프레임씩 확인)
-        # 각 프레임 사이의 시간 간격 계산
-        frame_interval = timestamps[i + 1] - timestamps[i] # 가져온 프레임 처리 시간 확인
-        frame_count = int(frame_interval * 30)  # 간격에 맞는 프레임 수 계산
-
-        # 프레임을 여러 번 쓰기 (FPS 동기화)
-        for _ in range(max(1, frame_count)): 
-            out.write(frames[i])
-
-    # 마지막 프레임 추가
-    out.write(frames[-1])
-    out.release()
-    print(f"Video saved at {output_path}")
-
-
 # ---- 메인 처리 루프 ----
 def main():
     global save_depth
