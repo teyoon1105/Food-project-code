@@ -122,32 +122,6 @@ class DepthVolumeCalculator:
                 total_volume += pixel_area_cm2 * height_cm # 부피 계산
 
         return total_volume
-    
-    # def draw_multiline_text_center(self, mask, height, width, min_y, min_x, texts, font=cv2.FONT_HERSHEY_SIMPLEX, 
-    #                          fontScale=1, color=(0,0,0), thickness=2, spacing=10):
-    #     # 이미지 크기
-    #     mask_height, mask_width = height, width
-        
-    #     # 모든 텍스트의 총 높이 계산
-    #     total_height = 0
-    #     text_sizes = []
-        
-    #     for text in texts:
-    #         (text_width, text_height), baseline = cv2.getTextSize(text, font, fontScale, thickness)
-    #         text_sizes.append((text_width, text_height))
-    #         total_height += text_height + spacing
-        
-    #     # 첫 텍스트의 y 좌표 계산 (전체 텍스트 블록의 시작점)
-    #     y = (mask_height - total_height) // 2 + min_y
-        
-    #     # 각 줄 그리기
-    #     for text, (text_width, text_height) in zip(texts, text_sizes):
-    #         x = (mask_width - text_width) // 2 + min_x
-    #         y += text_height  
-            
-    #         cv2.putText(mask, text, (x,y), font, fontScale, color, thickness)
-    #         y += spacing  # 줄 간격 추가
-
 
     def visualize_results(self, cropped_image, mask, object_name, volume, conf, mask_indices):
         """
@@ -291,6 +265,7 @@ if __name__ == "__main__":
     # 로그 레벨 설정 (INFO 메시지 비활성화)
     logging.getLogger("ultralytics").setLevel(logging.WARNING)
 
+    # class name for mapping 
     CLS_NAME_COLOR = {
     '01011001': ('Rice', (255, 0, 255)), # 자주색
     '01012006': ('Black Rice', (255, 0, 255)),
@@ -310,6 +285,7 @@ if __name__ == "__main__":
 
     MODEL_DIR = os.path.join(os.getcwd(), 'model')
 
+    # model pt file's list
     model_list = ['1st_1000mix_a1002_best.pt', 
                   '1st_100scaled_50org_mix_best.pt', 
                   '1st_500_best.pt', 
